@@ -5,5 +5,5 @@ copyright "Copyright © 2017, rolf"
 license "proprietary"
 targetType "executable"
 
-dependency "derelict-glfw3" version="~>3.0.0"
+dependency "derelict-glfw3" version="3.0.1"
 dependency "derelict-gl3" version="*"

@@ -11,7 +11,7 @@ void main(){
     
      p.x += (position.x - position.z) * sin(angle);
      p.y *= 1;
-     p.xy -= vec2(0.2, 0.9);
+     p.xy -= vec2(0.0, 1);
      //     p.xy *= 0.9;
      gl_Position = p;
 }

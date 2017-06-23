@@ -72,14 +72,15 @@ void print_octree_positions(T)(OctreeIndex!T oct, void delegate(float s, float x
 	float dx = i % 2;
 	float dy = (i / 2) % 2;
 	float dz = (i / 4) % 2;
-	recurse(index.get_child(i), size * 0.5, x + dx * size * 0.5, y + dy * size * 0.5, z + dz * size * 0.5);
+	float halfsize = size * 0.5;
+	recurse(index.get_child(i), halfsize, x + dx * halfsize, y + dy * halfsize, z + dz * halfsize);
       }
     }
   }
   recurse(oct, 1, 0, 0, 0);
 }
 void printPos(float size, float x, float y, float z, ref int payload){
-    writefln("%s %s %s %s %s", size, x, y, z, payload);
+  writefln("%s %s %s %s %s", x, y, z, size, payload);
   }
 
 class OctreeRenderer{
@@ -94,12 +95,13 @@ void load(OctreeRenderer renderer){
   auto fs = compileShader(GL_FRAGMENT_SHADER, readText("simple_shader.fs"));
   auto vs = compileShader(GL_VERTEX_SHADER, readText("simple_shader.vs"));
   auto prog = glCreateProgram();
-  glAttachShader(prog, fs);
+  prog.glAttachShader(fs);
   glAttachShader(prog, vs);
   glLinkProgram(prog);
   glUseProgram(prog);
   
-  double[] data = [0,0, 0,1, 1,-1, 1,2, 2,0, 2, 1];
+  //double[] data = [0,0, 0,1, 1,-1, 1,2, 2,0, 2, 1];
+  double[] data = [0,0, -1,1, 1,1, -1,2, 1,2, 0, 3];
   uint buffer;
   glGenBuffers(1, &buffer);
   glBindBuffer(GL_ARRAY_BUFFER, buffer);
@@ -134,10 +136,9 @@ void render(OctreeRenderer renderer, OctreeIndex!int oct ){
   }
   print_octree_positions(oct, &print_voxel);
   void printPos(float size, float x, float y, float z, ref int payload){
-    writefln("%s %s %s %s %s", size, x, y, z, payload);
+    writefln("%s %s %s %s %s",  x, y, z, size,payload);
   }
 
-   print_octree_positions(oct, &printPos);
 
 }
 
@@ -153,40 +154,29 @@ void main(string[] args){
   writeln(fp[1]);
   printThing(fp[0]);
   printThing(1);
-  
   auto oct = new Octree!int();
-  auto idx2 = oct.first_index();
+  
+  auto idx2 = oct.first_index;
   bool[15] x;
   writeln(x.sizeof);
   writeln(int.sizeof);
-  auto idx3 = idx2.get_child(3, true);
-  writeln(idx3);
-  auto idx5 = idx3.get_child(2).get_child(1);
-  writeln(idx5);
-  writeln(idx3.get_child(2).get_child(1));
-  writeln(idx3.get_child(5).get_child(3));
-  auto idx4 = idx2;//.get_child(3).get_child(2);
-  /*idx3.get_child(2).get_child(3).get_payload() = 1;
-  idx3.get_child(2).get_child(2).get_payload() = 2;
-  idx3.get_child(2).get_child(6).get_payload() = 3;
-  idx3.get_child(3).get_child(3).get_payload() = 1;
-  idx3.get_child(3).get_child(2).get_payload() = 2;*/
-  for(int j = 0; j < 8; j++)
+ 
+   for(int j = 0; j < 8; j++)
   for(int i = 0; i < 8; i++){
     if(j < 7 && i < 7)
-      idx4.get_child(j).get_child(i).get_payload() = i + 1;
+      idx2.get_child(j).get_child(i).get_payload = i + 1;
   }
   for(int j = 0; j < 8; j++)
     for(int i = 0; i < 8; i++){
       if(j >= 7 || i >= 7){
-	auto sub = idx4.get_child(j).get_child(i);
+	auto sub = idx2.get_child(j).get_child(i);
 	for(int i2 = 0; i2 < 8; i2++){
 	  for(int j2 = 0; j2 < 8; j2++){
 	    sub.get_child(j2).get_child(i2).get_payload() = i2 + 1;
 	  }
 	}
       }
-  }
+    }
   /*
   idx3.get_child(0).get_payload() = 3;
   idx3.get_child(1).get_payload() = 3;

@@ -10,7 +10,7 @@ void main(){
      p.y += position.y  + (position.z + position.x) * cos(angle);
     
      p.x += (position.x - position.z) * sin(angle);
-     p.xy *= 0.3;
+     p.xy *= 0.01;
      p.y *= -1;
      gl_Position = p;
 }
