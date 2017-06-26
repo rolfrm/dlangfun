@@ -79,6 +79,10 @@ OctreeIndex!T get_child(T)(OctreeIndex!T index, int child_index, bool create = t
   return OctreeIndex!T(index.basetree, index.parent_index, child_index); 
 }
 
+OctreeIndex!T get_child(T)(OctreeIndex!T index, int x, int y, int z, bool create = true){
+  return get_child(index, x + y * 2 + z * 4, create);
+}
+
 NodeType get_type(T)(OctreeIndex!T index){
   if(index.child_index == -1) return NodeType.Cell;
   return index.basetree.type[index.parent_index][index.child_index];

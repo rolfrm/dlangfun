@@ -168,19 +168,28 @@ void main(string[] args){
   
   auto simple_model = new Octree!int();
   auto s1 = simple_model.first_index;
-  s1.get_child(0).get_payload = 256;
-  s1.get_child(1).get_payload = 256;
-  s1.get_child(2).get_payload = 270;
-  s1.get_child(3).get_payload = 276;
-  s1.get_child(4).get_payload = 256;
-  s1.get_child(5).get_payload = 256;
-  s1.get_child(6).get_payload = 270;
-  s1.get_child(7).get_payload = 276;
+  s1.get_child(0,0,0).get_child(1,1,1).get_payload = 256;
+  s1.get_child(1,0,0).get_child(0,1,1).get_payload = 256;
+  s1.get_child(0,1,0).get_child(1,0,1).get_payload = 270;
+  s1.get_child(0,0,1).get_child(1,1,0).get_payload = 276;
+  s1.get_child(1,1,0).get_child(0,0,1).get_payload = 256;
+  s1.get_child(1,0,1).get_child(0,1,0).get_payload = 256;
+  s1.get_child(0,1,1).get_child(1,0,0).get_payload = 270;
+  s1.get_child(1,1,1).get_child(0,0,0).get_payload = 276;
+  
   entity e1 = new entity();
   e1.offset[0] = 0.0;
   e1.offset[1] = 0.0;
   e1.offset[2] = 0.0;
   e1.model = simple_model;
+
+  entity e2 = new entity();
+  e2.offset[0] = 0.0;
+  e2.offset[1] = 0.0;
+  e2.offset[2] = 0.0;
+  e2.model = simple_model;
+
+  
   
   auto oct = new Octree!int();
   
@@ -217,16 +226,17 @@ void main(string[] args){
       }
       }*/
   OctreeRenderer renderer = new OctreeRenderer();
-  renderer.entities.length = 2;
+  renderer.entities.length = 3;
   renderer.entities[1] = e1;
-  idx2.get_child(0).get_payload = 10;
-  idx2.get_child(1).get_payload = 10;
+  renderer.entities[2] = e2;
+  idx2.get_child(0).get_payload = 40;
+  idx2.get_child(1).get_payload = 50;
   idx2.get_child(2).get_payload = 1;
-  idx2.get_child(3).get_payload = 1;
-  idx2.get_child(4).get_payload = 10;
-  idx2.get_child(5).get_payload = 10;
-  idx2.get_child(6).get_payload = 10;
-  idx2.get_child(7).get_payload = 10;
+  idx2.get_child(3).get_payload = 2;
+  idx2.get_child(4).get_payload = 15;
+  idx2.get_child(5).get_payload = 20;
+  idx2.get_child(6).get_payload = 25;
+  idx2.get_child(7).get_payload = 30;
   /*
   idx3.get_child(0).get_payload() = 3;
   idx3.get_child(1).get_payload() = 3;
@@ -244,6 +254,9 @@ void main(string[] args){
   render_voxels( {
       render(renderer, idx2);
       renderer.entities[1].offset[1] = sin(t) * 0.1;
+      renderer.entities[2].offset[0] = sin(t) * 0.1;
+      renderer.entities[2].offset[2] = cos(t) * 0.1;
+      
       t += 0.001;
     });
 }
