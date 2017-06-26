@@ -33,7 +33,7 @@ uint compileShader(GLenum program, string code){
   return ss;
 }
 
-void render_voxels(void delegate() render){
+void render_voxels(void delegate () render){
   DerelictGLFW3.load();
   DerelictGL3.load();
   glfwInit();  
@@ -61,7 +61,7 @@ void render_voxels(void delegate() render){
 	
 }
 
-void print_octree_positions(T)(OctreeIndex!T oct, void delegate(float s, float x, float y, float z, ref T payload) fcn){
+void print_octree_positions(T)(OctreeIndex!T oct, void delegate(float s, float x, float y, float z, ref T payload) fcn, float s = 1.0f, float x = 0.0f, float y = 0.0f, float z= 0.0f){
   
   void recurse(OctreeIndex!T index, float size, float x, float y, float z){
     fcn(size, x, y, z, index.get_payload());
@@ -77,17 +77,24 @@ void print_octree_positions(T)(OctreeIndex!T oct, void delegate(float s, float x
       }
     }
   }
-  recurse(oct, 1, 0, 0, 0);
+  recurse(oct, s, x, y, z);
 }
 void printPos(float size, float x, float y, float z, ref int payload){
   writefln("%s %s %s %s %s", x, y, z, size, payload);
   }
+
+class entity{
+  Octree!int model;
+  float[3] offset;
+}
 
 class OctreeRenderer{
   uint buffer;
   int vertexes;
   uint prog;
   bool loaded;
+  entity[] entities;
+  
   float t;
 }
 
@@ -123,23 +130,27 @@ void render(OctreeRenderer renderer, OctreeIndex!int oct ){
   //writeln(renderer.t);
   void print_voxel(float size, float x, float y, float z, ref int payload){
     if(payload != 0){
+      if(payload < renderer.entities.length){
+	
+	auto entity = renderer.entities[payload];
+	print_octree_positions!int(entity.model.first_index, &print_voxel, size, x + entity.offset[0], y + entity.offset[1], z + entity.offset[2]);
+	
+      }else{
+	int r = payload % 4;
+	int g = (payload / 4) % 4;
+	glUniform4f(glGetUniformLocation(renderer.prog, "color"), r / 4.0f, g / 4.0f, 0.5, 1);
+	glUniform3f(glGetUniformLocation(renderer.prog, "position"), x, y, z);
+	glUniform1f(glGetUniformLocation(renderer.prog, "size"), size);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, renderer.vertexes);
+
+      }
       //writefln("%s %s %s %s %s", size, x, y, z, payload);
-      
-      int r = payload % 4;
-      int g = (payload / 4) % 4;
-      glUniform4f(glGetUniformLocation(renderer.prog, "color"), r / 4.0f, g / 4.0f, 0.5, 1);
-      glUniform3f(glGetUniformLocation(renderer.prog, "position"), x, y, z);
-      glUniform1f(glGetUniformLocation(renderer.prog, "size"), size);
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, renderer.vertexes);
-    
     }
   }
   print_octree_positions(oct, &print_voxel);
   void printPos(float size, float x, float y, float z, ref int payload){
     writefln("%s %s %s %s %s",  x, y, z, size,payload);
   }
-
-
 }
 
 
@@ -154,29 +165,68 @@ void main(string[] args){
   writeln(fp[1]);
   printThing(fp[0]);
   printThing(1);
+  
+  auto simple_model = new Octree!int();
+  auto s1 = simple_model.first_index;
+  s1.get_child(0).get_payload = 256;
+  s1.get_child(1).get_payload = 256;
+  s1.get_child(2).get_payload = 270;
+  s1.get_child(3).get_payload = 276;
+  s1.get_child(4).get_payload = 256;
+  s1.get_child(5).get_payload = 256;
+  s1.get_child(6).get_payload = 270;
+  s1.get_child(7).get_payload = 276;
+  entity e1 = new entity();
+  e1.offset[0] = 0.0;
+  e1.offset[1] = 0.0;
+  e1.offset[2] = 0.0;
+  e1.model = simple_model;
+  
   auto oct = new Octree!int();
   
   auto idx2 = oct.first_index;
   bool[15] x;
   writeln(x.sizeof);
   writeln(int.sizeof);
- 
-   for(int j = 0; j < 8; j++)
-  for(int i = 0; i < 8; i++){
-    if(j < 7 && i < 7)
-      idx2.get_child(j).get_child(i).get_payload = i + 1;
-  }
+  /*
+  for(int j = 0; j < 8; j++)
+    for(int i = 0; i < 8; i++){
+      if(j < 7 && i < 7 && j != 2){
+	idx2.get_child(j).get_child(i).get_payload = i + 255;
+      }
+    }
+  int test = 0;
   for(int j = 0; j < 8; j++)
     for(int i = 0; i < 8; i++){
       if(j >= 7 || i >= 7){
+	
 	auto sub = idx2.get_child(j).get_child(i);
-	for(int i2 = 0; i2 < 8; i2++){
-	  for(int j2 = 0; j2 < 8; j2++){
-	    sub.get_child(j2).get_child(i2).get_payload() = i2 + 1;
+	  for(int i2 = 0; i2 < 8; i2++){
+	    for(int j2 = 0; j2 < 8; j2++){
+	      if(j2 != 2){
+		if(test % 5 == 0){
+		  sub.get_child(j2).get_child(i2).get_payload() = i2 + 255;
+		}else{
+		  sub.get_child(j2).get_payload = 0;
+		}
+	      }
+	      
+	      test++;
+	    }
 	  }
-	}
       }
-    }
+      }*/
+  OctreeRenderer renderer = new OctreeRenderer();
+  renderer.entities.length = 2;
+  renderer.entities[1] = e1;
+  idx2.get_child(0).get_payload = 10;
+  idx2.get_child(1).get_payload = 10;
+  idx2.get_child(2).get_payload = 1;
+  idx2.get_child(3).get_payload = 1;
+  idx2.get_child(4).get_payload = 10;
+  idx2.get_child(5).get_payload = 10;
+  idx2.get_child(6).get_payload = 10;
+  idx2.get_child(7).get_payload = 10;
   /*
   idx3.get_child(0).get_payload() = 3;
   idx3.get_child(1).get_payload() = 3;
@@ -190,6 +240,10 @@ void main(string[] args){
   //  auto f = &printPos;
 
   bool first = false;
-  OctreeRenderer renderer = new OctreeRenderer();
-  render_voxels(() => renderer.render(idx2));
+  float t = 0.0;
+  render_voxels( {
+      render(renderer, idx2);
+      renderer.entities[1].offset[1] = sin(t) * 0.1;
+      t += 0.001;
+    });
 }
